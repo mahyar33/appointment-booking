@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  database:
+    build:
+      context: ./docker
+      dockerfile: ./Dockerfile.database
+    container_name: appointment_db
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.backend
+    container_name: appointment_backend
+    restart: always
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: mypassword123!
+      DATABASE_NAME: coding-challenge
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    volumes:
+      - ./backend:/usr/src/app
+    command: yarn start:dev
+
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile.frontend
+    container_name: appointment_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./frontend/src:/usr/src/app/src
+    command: npm run dev -- --host
+
+volumes:
+  db-data:
